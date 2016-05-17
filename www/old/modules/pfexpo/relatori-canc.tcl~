@@ -1,0 +1,25 @@
+ad_page_contract {
+    Programma per la cancellazione di un relatore.
+    @author Mattia Righetti (mattia.righetti@professionefinanza.com)
+    @cvs-id processing-delete.tcl
+    @param genere_id The id to delete
+} {
+    expo_id:integer
+    module
+    relatore_id:integer
+}
+pf::permission
+with_catch errmsg {
+    #Cancella il file collegato.
+    set file_name [db_string query "select immagine from expo_relatori where relatore_id = :relatore_id"]
+    if {$file_name ne ""} {
+	exec rm -f /usr/share/openacs/packages/images/www/pfexpo/relatori_portraits/$file_name
+    }
+    db_dml query "delete from expo_relatori where relatore_id = :relatore_id"
+} {
+    ad_return_complaint 1 "<b>Attenzione: non è stato possibile cancellare il docente, probabilmente è ancora referenziato da qualche evento.</b>"
+    return
+}
+set template "modules%2fpfexpo%2frelatori-list"
+ad_returnredirect [export_vars -base "index" {expo_id module template}]
+ad_script_abort

@@ -1,0 +1,9 @@
+  <table>
+    <tr>
+      <td width="60%">
+	<formtemplate id="register"></formtemplate><br></br>
+      </td>
+      <td valign="top">
+	<div class="alert alert-info" role="alert">Se sei hai già un account accedi <b><a href="http://sso.professionefinanza.com/register/">cliccando qua</a></b>.</div>
+    </tr>
+  </table>

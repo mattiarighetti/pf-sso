@@ -1,0 +1,74 @@
+ad_page_contract {
+    @author Mattia Righetti (mattia.righetti@professionefinanza.com)
+    @creation-date Friday 12 November, 2014
+} {
+    iscritto_id:integer
+    {return_url ""}
+}
+set user_id [ad_conn user_id]
+if {$user_id == 0} {
+    ad_returnredirect "login?return_url=/pfexpo/"
+}
+set page_title "Situazione iscritto"
+set context [list [list $return_url {Iscritti}] "$page_title"]
+set form_name "iscritto"
+ad_form -name $form_name \
+    -mode display \
+    -export "return_url" \
+    -has_edit 0 \
+    -has_submit 0 \
+    -cancel_url [export_vars -base "iscritto-canc" {iscritto_id return_url}] \
+    -cancel_label "Cancella iscritto" \
+    -show_required_p 0 \
+    -form {
+        iscritto_id:key
+        {nome:text
+            {label "Nome"}
+            {html {size 50}}
+        }
+        {cognome:text
+            {label "Cognome"}
+            {html {size 50}}
+        }
+	{email:text
+	    {label "Email"}
+	    {html {size 50}}
+	}
+	{societa:text,optional
+	    {label "Società"}
+	    {html {size 50}}
+	}
+	{data:date(date)
+	    {label "Data iscrizione"}
+	}
+    } -select_query {
+	"SELECT INITCAP(LOWER(nome)) AS nome, INITCAP(LOWER(cognome)) AS cognome, LOWER(email) AS email, INITCAP(LOWER(societa)) AS societa, data FROM pf_expo_iscr WHERE iscritto_id = :iscritto_id"
+    } -edit_data {
+	db_dml query "UPDATE pf_expo_iscr SET nome = INITCAP(LOWER(:nome)), cognome = INITCAP(LOWER(:cognome)), email = LOWER(:email), societa = INITCAP(LOWER(:societa)) WHERE iscritto_id = :iscritto_id"
+    }
+set list_name "iscrizioni"
+template::list::create \
+    -name $list_name \
+    -multirow $list_name \
+    -key iscrizione_id \
+    -caption "Situazione iscritto" \
+    -elements {
+	iscrizione_id {
+	    label "ID"
+	}
+	descrizione {
+	    label "Evento"
+	}
+	pagato {
+            link_html {title "Clicca per cambiare stato pagamento."}
+            link_url_col paid_url
+            sub_class narrow
+        }	
+    }
+db_multirow \
+    -extend {
+	paid_url
+    } $list_name query "SELECT e.descrizione, i.iscrizione_id, CASE WHEN i.pagato = true THEN 'Pagato' WHEN i.pagato = false THEN 'Non pagato' WHEN i.pagato IS NULL THEN '' END AS pagato FROM pf_expo_eventi e, pf_expo_iscrizioni i WHERE i.iscritto_id = :iscritto_id AND e.evento_id = i.evento_id " {
+	set current_url [export_vars -base "iscritto-gest" {iscritto_id return_url}]
+	set paid_url [export_vars -base "iscrizione-paid" {iscrizione_id current_url}]
+    }

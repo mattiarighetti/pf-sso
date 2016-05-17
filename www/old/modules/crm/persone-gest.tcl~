@@ -1,0 +1,82 @@
+ad_page_contract {
+    @author Mattia Righetti (mattia.righetti@professionefinanza.com)
+    @creation-date Thursday 19 February 2015
+} {
+}
+set page_title "Aggiungi persona"
+set buttons [list [list "Salva" new]]
+set context [list $page_title]
+template::head::add_css -href "/resources/pf-theme/styles/flakes/css/all.css"
+set comuni_datalist "<datalist id=\"comuni\">"
+db_foreach query "select denominazione, comune_id from comuni" {
+    append comuni_datalist "<option value=\"$comune_id\">$denominazione</option>"
+}
+append comuni_datalist "</datalist>"
+ad_form -name persone \
+    -edit_buttons $buttons \
+    -has_edit 1 \
+    -form {
+	persona_id:key
+	{nome:text
+	    {label "Nome"}
+	    {html {size 70 maxlength 100}}
+7	}
+	{sec_nome:text,optional
+	    {label "Secondo nome"}
+	    {html {size 70 maxlength 100}}
+	}
+	{cognome:text
+	    {label "Cognome"}
+	    {html {size 70 maxlength 100}}
+	}
+	{albo_pf:boolean(checkbox),optional
+	    {label "Albo P.F."}
+	    {options {{"" 1}}}
+	}
+	{societa_id:search,optional
+	    {after_html "<a href=\"societa-gest\" target=\"_blank\"><img src=\"http://images.professionefinanza.com/icons/new.gif\" /></a>"}
+	    {label "Societ&agrave;"}
+	    {search_query "SELECT ragionesociale, societa_id FROM crm_societa WHERE LOWER(ragionesociale) LIKE '%'||LOWER(:value)||'%'"}
+	    {result_datatype integer}
+	}
+	{sesso:string(radio)
+	    {label "Sesso"}
+	    {options {{"Maschile" "M"} {"Femminile" "F"}}}
+	}
+	{codicefiscale:text,optional
+	    {label "Codice fiscale"}
+	    {html {size 70 maxlength 16}}
+	}
+	{partitaiva:text,optional
+	    {label "Partita IVA"}
+	    {html {size 70 maxlength 11}}
+	}
+	{data_na:date(date),optional
+	    {label "Data di nascita"}
+	}
+	{luogo_na:search,optional
+	    {after_html "<a href=\"comuni-gest\" target=\"_blank\"><img src=\"http://images.professionefinanza.com/icons/new.gif\" /></a>"}
+	    {label "Luogo di nascita"}
+	    {search_query "SELECT denominazione, comune_id FROM comuni WHERE LOWER(denominazione) LIKE '%'||LOWER(:value)||'%'"}
+            {result_datatype integer}
+	}
+	{user_id:search,optional
+	    {label "Utente"}
+	    {search_query "SELECT first_names||' '||last_name||' ('||email||')', user_id FROM registered_users WHERE LOWER(last_name||first_names||email) LIKE '%'||LOWER(:value)||'%'"}
+	    {result_datatype integer}
+	}
+	{note:text(textarea),optional
+	    {label "Note"}
+	    {html {rows 10 cols 70 wrap soft}}
+	}
+    }  -select_query {
+	"SELECT nome, sec_nome, cognome, albo_pf, societa_id, sesso, codicefiscale, partitaiva, luogo_na, data_na, note FROM crm_persone WHERE persona_id = :persona_id"
+    } -new_data {
+	set persona_id [db_string query "SELECT COALESCE(MAX(persona_id)+1,1) FROM crm_persone"]
+	db_dml query "INSERT INTO crm_persone (persona_id, nome, sec_nome, cognome, albo_pf, societa_id, sesso, codicefiscale, partitaiva, luogo_na, data_na, note) VALUES (:persona_id, :nome, :sec_nome, :cognome, :albo_pf, :societa_id, :sesso, :codicefiscale, :partitaiva, :luogo_na, :data_na, :note)"
+    } -edit_data {
+	db_dml query "UPDATE crm_persone SET nome = :nome, sec_nome = :sec_nome, cognome = :cognome, albo_pf = :albo_pf, societa_id = :societa_id, sesso = :sesso, codicefiscale = :codicefiscale, partitaiva = :partitaiva, data_na = :data_na, luogo_na = :luogo_na, note = :note WHERE persona_id = :persona_id"
+    } -after_submit {
+	ad_returnredirect -message "Persona (ID: $persona_id) inserita correttamente." [export_vars -base "persone-view" {persona_id}]
+	ad_script_abort
+    }

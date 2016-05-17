@@ -1,0 +1,38 @@
+ad_page_contract {
+    @author Mattia Righetti (mattia.righetti@professionefinanza.com)
+    @creation-date 23 December 2014
+} {
+    expo_id:integer
+    {module "pfexpo"}
+    orderby:optional
+}
+pf::permission
+set page_title "Eventi"
+set context [list [list ?module=pfexpo "PFEXPO"] $page_title]
+template::list::create \
+    -name eventi \
+    -multirow eventi \
+    -actions $actions \
+    -elements {	
+        evento_id {
+            label "ID"
+        }
+	denominazione {
+	    label "Denominazione"
+	    link_col_url iscritti_url
+	}
+    } \
+    -orderby {
+	default_value evento_id
+	evento_id {
+	    label "ID"
+	    orderby evento_id
+	}
+    }
+db_multirow \
+    -extend {
+	edit_url
+	delete_url
+    } eventi query "select evento_id, denominazione, case when prezzo is not null then to_char(prezzo::decimal, '99.99') else 'Gratis' end as prezzo from expo_eventi where expo_id = :expo_id [template::list::filter_where_clauses -name eventi -and] [template::list::orderby_clause -name eventi -orderby]" {
+	set iscritti_url "?module=pfexpo&expo_id=$expo_id&evento_id=$evento_id&template=modules%2Fpfexpo%2Fiscritti-list"
+    }

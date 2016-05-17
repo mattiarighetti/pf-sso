@@ -1,0 +1,20 @@
+ad_page_contract {  
+    @author Mattia Righetti (mattia.righetti@professionefinanza.com)
+    @creation-date Thursday 12 February 2015
+} {
+    {module "crm"}
+}
+pf::permission
+set page_title "CRM - PF Holding"
+set context [list $page_title]
+set focus "q"
+ad_form -name "cerca" \
+    -mode edit \
+    -form {
+	{q:text(text)
+	    {label "Ricerca"}
+	}
+    } -on_submit {
+	ad_returnredirect [export_vars -base "?template=persone-list" {q module}]
+    }
+ad_return_template

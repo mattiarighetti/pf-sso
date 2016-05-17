@@ -1,0 +1,69 @@
+ad_page_contract {
+    @author Mattia Righetti (mattia.righetti@professionefinanza.com)
+    @creation-date Thursday 19 February 2015
+} {
+    expo_id:naturalnum
+    partner_id:integer,optional
+    upload_file:trim,optional
+    upload_file.tmpfile:tmpfile,optional
+    {module "pfexpo"}
+}
+if {[ad_form_new_p -key partner_id]} {
+    set page_title "Nuovo partner"
+    set buttons [list [list "Nuovo" new]]
+} else {
+    set page_title "Modifica docente"
+    set buttons [list [list "Modifica" edit]]
+}
+set context [list [list [export_vars -base "?template=modules%2Fpfexpo%2Fpartners-list" {expo_id}] "Partners"] $page_title]
+set mime_types [parameter::get -parameter AcceptablePortraitMIMETypes -default ""]
+set max_bytes [parameter::get -parameter MaxPortraitBytes -default ""]
+ad_form -name partner \
+    -edit_buttons $buttons \
+    -has_edit 1 \
+    -export {expo_id module} \
+    -html {enctype "multipart/form-data"} \
+    -form {
+	partner_id:key
+	{denominazione:text
+	    {label "Denominazione"}
+	    {html {size 70 maxlength 50}}
+	}
+	{upload_file:text(file)
+	    {help_text "Il file non può essere superiore a $max_bytes Bytes e in formato $mime_types."}
+	    {label "Immagine"}
+	}
+    } -select_query {
+	"select partner_id, denominazione, user_id, immagine AS upload_file from expo_partners where partner_id = :partner_id"
+    } -validate {
+	{upload_file
+	    { $mime_types eq "" || [lsearch $mime_types [ns_guesstype $upload_file]] > -1 }
+	    {Il file che hai caricato non è tra i seguenti formati accettabili: $mime_types}
+	}
+	{upload_file
+	    { $max_bytes eq "" || [file size [ns_queryget upload_file.tmpfile]] <= $max_bytes }
+	    {Il file è troppo grande. Prego ridimensionarlo a massimo [util_commify_number $max_bytes] bytes.}
+	}
+    } -new_data {
+	db_transaction {
+	    set docente_id [db_string query "SELECT COALESCE(MAX(docente_id)+1,1) FROM expo_docenti"]	    
+	    regsub -all {\\} $upload_file "<" upload_file
+	    ns_rename $filepath /usr/share/openacs/packages/images/www/pfexpo/docenti_portraits/$upload_file
+	    db_dml query "INSERT INTO expo_docenti (docente_id, nome, cognome, short_cv, immagine) VALUES (:docente_id, :nome, :cognome, :short_cv, :upload_file)"    
+	}
+    } -edit_data {
+    	if {$upload_file eq ""} {
+	    db_dml query "UPDATE expo_docenti SET docente_id = :docente_id, short_cv = :short_cv, nome = :nome, cognome = :cognome WHERE professionista_id = :professionista_id"
+	} else {
+	    db_transaction {
+		regsub -all {\\} $upload_file "<" upload_file
+		ns_rename $filepath /usr/share/openacs/packages/images/www/pfexpo/docenti_portraits/$upload_file
+		db_dml query "UPDATE expo_docenti SET docente_id = :docente_id, short_cv = :short_cv, nome = :nome, cognome = :cognome, immagine = :upload_file WHERE professionista_id = :professionista_id"
+	    }
+	}
+    } -on_submit {
+	set filepath [ns_queryget upload_file.tmpfile]
+    } -after_submit {
+	ad_returnredirect "docenti-list"
+	ad_script_abort
+    }
