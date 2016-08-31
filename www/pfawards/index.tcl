@@ -1,16 +1,19 @@
 ad_page_contract {
+    Pagina index per i menu di PFAwards.
+    
     @author Mattia Righetti (mattia.righetti@professionefinanza.com)
     @creation-date Wednesday 14 October 2015
 } 
-pf::user_must_login
+set user_id [auth::require_login]
+set dash_html [pf::dash_menu "pfawards"]
 set page_title "PFAwards - ProfessioneFinanza"
-set context [list $page_title]
-set dash_menu [pf::dash_menu "pfawards"]
-template::head::add_css -href /dashboard.css
+acs_user::get -user_id $user_id -array user_info
+set username $user_info(first_names)
+append username $user_info(last_name)
 set persona_id [db_string query "select persona_id from crm_persone where user_id = [ad_conn user_id]"]
-set exam_table "<table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Stato</th><th>Data</th><th>Tempo</th><th>Termine ultimo</th><th>Punti</th><th></th></tr>"
-db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, initcap(lower(e.stato)) as stato, to_char(e.start_time, 'DD/MM/YYYY') as data, to_char(e.end_time - e.start_time, 'MI') as minuti, e.punti, e.attivato, to_char(e.scadenza, 'DD/MM/YYYY') as scadenza from awards_esami e, awards_categorie c where e.persona_id = :persona_id and c.categoria_id = e.categoria_id order by e.award_id, e.stato desc, e.categoria_id, e.scadenza, e.start_time desc, e.esame_id" {
-    append exam_table "<tr><td>$esame_id</td><td>$titolo</td>"
+set exam_table "<table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Edizione PFAwards</th><th>Stato</th><th>Data</th><th>Tempo</th><th>Decorrenza</th><th>Scadenza</th><th>Punti</th><th></th></tr>"
+db_foreach query "select c.titolo, e.esame_id, ed.anno, e.pdf_doc, initcap(lower(e.stato)) as stato, to_char(e.start_time, 'DD/MM/YYYY') as data, to_char(e.end_time - e.start_time, 'MI') as minuti, e.punti, e.attivato, to_char(e.decorrenza, 'DD/MM/YYYY') as decorrenza, to_char(e.scadenza, 'DD/MM/YYYY') as scadenza from awards_esami e, awards_categorie c, awards_edizioni ed where e.persona_id = :persona_id and e.award_id = ed.award_id and c.categoria_id = e.categoria_id order by e.award_id desc, e.stato desc, e.categoria_id, e.scadenza, e.start_time desc, e.esame_id" {
+    append exam_table "<tr><td>$esame_id</td><td>$titolo</td><td>$anno</td>"
     if {$stato == ""} {
 	set stato "Da svolgere"
     }
@@ -23,8 +26,8 @@ db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, initcap(lower(e.stato)
     if {$minuti ne ""} {
 	append minuti " <small>minuti</small>"
     }
-    append exam_table "<td>$stato</td><td>$data</td><td>$minuti</td><td>$scadenza</td><td>$punti</td>"
-    if {$attivato == "t" && $stato == "Da svolgere"} {
+    append exam_table "<td>$stato</td><td>$data</td><td>$minuti</td><td>$decorrenza</td><td>$scadenza</td><td>$punti</td>"
+    if {$attivato == "t" && $stato == "Da svolgere" && [db_string query "select case when current_date < :decorrenza then 1 else 0 end"]} {
 	append exam_table "<td><a class=\"btn btn-default\" href=\"http://test.pfawards.professionefinanza.com/?esame_id=$esame_id\" role=\"button\"><span class=\"glyphicon glyphicon-play-circle\"></span> Svolgi</a></td>"
     } else {
 	if {$stato == "Svolto" || $stato == "Rifiutato"} {

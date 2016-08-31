@@ -47,7 +47,7 @@
             <!-- <input type="password"required autocomplete="off"/> -->
           </div>
           
-          <p class="forgot"><a href="#">Hai dimenticato la password?</a></p>
+          <p class="forgot"><a href="recover-password">Hai dimenticato la password?</a></p>
           
           <button class="button button-block"/>Log In</button>
           

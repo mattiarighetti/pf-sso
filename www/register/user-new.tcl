@@ -9,9 +9,10 @@ ad_page_contract {
 }
 set logo ""
 set menu ""
+set logo_url "http://images.professionefinanza.com/logos/pfawards.png"
 if {$ref == "pfawards"} {
-    template::head::add_css -href "http://pfawards.professionefinanza.com/awards_style.css" 
-    set logo "http://images.professionefinanza.com/pfawards/logos/awards-2016.png"
+#    template::head::add_css -href "http://pfawards.professionefinanza.com/awards_style.css" 
+    set logo "http://images.professionefinanza.com/pfawards/logos/awards-2017.png"
     set menu [pf::fe_html_menu -id 18]
 }
 set registration_url [parameter::get -parameter RegistrationRedirectUrl]

@@ -10,45 +10,7 @@
 #                   Will add an element to the form where the user can pick a relation among the permissible 
 #                   rel-types for the group.
 
-
-# Check if user can self register
-auth::self_registration
-
-# Set default parameter values
-array set parameter_defaults {
-    self_register_p 1
-    next_url {}
-    return_url {}
-}
-foreach parameter [array names parameter_defaults] { 
-    if { (![info exists $parameter] || $parameter eq "") } { 
-        set $parameter $parameter_defaults($parameter)
-    }
-}
-
-# Redirect to HTTPS if so configured
-if { [security::RestrictLoginToSSLP] } {
-    security::require_secure_conn
-}
-
-# Log user out if currently logged in, if specified in the includeable chunk's parameters, 
-# e.g. not when creating accounts for other users
-if { $self_register_p } {
-    ad_user_logout 
-}
-
-# Redirect to the registration assessment if there is one, if not, continue with the regular
-# registration form.
-
-set implName [parameter::get -parameter "RegistrationImplName" -package_id [subsite::main_site_id]]
-
-set callback_url [callback -catch -impl "$implName" user::registration]
-
-if { $callback_url ne "" } {
-    ad_returnredirect [export_vars -base $callback_url { return_url }]
-    ad_script_abort
-}
-
+set next_url "http://pfawards.professionefinanza.com/iscriviti"
 
 # Pre-generate user_id for double-click protection
 set user_id [db_nextval acs_object_id_seq]
@@ -58,9 +20,6 @@ ad_form -name register -export {next_url user_id return_url} -form {
 	{label Email}
 	{html {size 30}}
     }
-    {username:text(hidden),optional
-	value {}
-    } 
     {first_names:text(text)
 	{label {Nome}} 
 	{html {size 30}}
@@ -91,22 +50,6 @@ ad_form -name register -export {next_url user_id return_url} -form {
 	{result_datatype integer}
 	{html {size 30}}
     }
-    {screen_name:text(hidden),optional 
-	{label {Nome schermo}} 
-	{html {size 30}}
-	{value ""}
-    } 
-    {url:text(hidden),optional 
-	{label {Indirzzo della Home Page personale:}}
-	{html {size 50 value "http://"}}
-	{value ""}
-    } 
-    {secret_question:text(hidden),optional 
-	{value ""}
-    } 
-    {secret_answer:text(hidden),optional 
-	{value ""}
-    }
 } -validate {
     {email
         {[string equal "" [party::get_by_email -email $email]]}
@@ -120,55 +63,18 @@ ad_form -name register -export {next_url user_id return_url} -form {
 	{ $password eq $password_confirm }
 	{Le password non coincidono.}
     }
-}
-
-if { ([info exists rel_group_id] && $rel_group_id ne "") } {
-    ad_form -extend -name register -form {
-        {rel_group_id:integer(hidden),optional}
-    }
-    
-    if { [permission::permission_p -object_id $rel_group_id -privilege "admin"] } {
-        ad_form -extend -name register -form {
-            {rel_type:text(select)
-                {label "Role"}
-                {options {[group::get_rel_types_options -group_id $rel_group_id]}}
-            }
-        }
-    } else {
-        ad_form -extend -name register -form {
-            {rel_type:text(hidden)
-                {value "membership_rel"}
-            }
-        }
-    }
-}
-
-ad_form -extend -name register -on_request {
-    # Populate elements from local variables
-    
 } -on_submit {
     
     db_transaction {
         array set creation_info [auth::create_user \
                                      -user_id $user_id \
                                      -verify_password_confirm \
-                                     -username $username \
-                                     -email $email \
+				     -email $email \
                                      -first_names $first_names \
                                      -last_name $last_name \
-                                     -screen_name $screen_name \
-                                     -password $password \
-                                     -password_confirm $password_confirm \
-                                     -url $url \
-                                     -secret_question $secret_question \
-                                     -secret_answer $secret_answer]
+				     -password $password \
+                                     -password_confirm $password_confirm]
 	
-        if { $creation_info(creation_status) eq "ok" && ([info exists rel_group_id] && $rel_group_id ne "") } {
-            group::add_member \
-                -group_id $rel_group_id \
-                -user_id $user_id \
-                -rel_type $rel_type
-        }
     }
     
     # Handle registration problems
@@ -523,11 +429,11 @@ a.link2 {
 
 
 if {$return_url eq ""} {
-    set next_url "conferma_iscrizione"
+    set next_url "http://pfawards.professionefinanza.com/iscriviti"
 }
 if { $next_url ne "" } {
     
-    ad_returnredirect [export_vars -base $next_url {return_url}]
+    ad_returnredirect -allow_complete_url $next_url
     ad_script_abort
 } 
     
@@ -535,7 +441,7 @@ if { $next_url ne "" } {
     # User is registered and logged in
     if { (![info exists return_url] || $return_url eq "") } {
         # Redirect to subsite home page.
-        set return_url [subsite::get_element -element url]
+        set return_url "http://pfawards.professionefinanza.com/iscriviti"
     }
     
     # If the user is self registering, then try to set the preferred
@@ -560,7 +466,7 @@ if { $next_url ne "" } {
         ad_script_abort
     } else {
         # No messages
-        ad_returnredirect $return_url
+        ad_returnredirect -allow_complete_url $return_url
         ad_script_abort
     }
 }

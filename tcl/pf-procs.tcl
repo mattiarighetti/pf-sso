@@ -71,7 +71,7 @@ ad_proc -public pf::dash_menu {
 	if {$modulo == "pfexpo"} {
 	    append dash_menu "<li><a href=\"pfexpo\" class=\"active\"><i class=\"fa fa-fw fa-globe\"></i> PFEXPO</a></li>"
 	} else {
-	    append dash_menu "<li><a href=\"pfexpo\"><i class=\"fa fa-fw fa-globe\"></i> PFEXPO</a></li>"
+	    append dash_menu "<li><a target=\"_blank\" href=\"http://pfexpo.it\"><i class=\"fa fa-fw fa-globe\"></i> PFEXPO</a></li>"
 	}
 
 	# PFAwards
