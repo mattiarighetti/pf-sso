@@ -44,7 +44,7 @@
                     <span class="icon-bar"></span>
                     <span class="icon-bar"></span>
                 </button>
-                <a class="navbar-brand" href="index"><img src="img/logo.png" style="height: 30px; display: inline-block;"> La tua dashboard</a>
+                <a class="navbar-brand" href="index"><img src="/img/logo.png" style="height: 30px; display: inline-block;"> La tua dashboard</a>
             </div>
             <!-- Top Menu Items -->
             <ul class="nav navbar-right top-nav">
@@ -126,7 +126,7 @@
                         </li>
                         <li class="divider"></li>-->
                         <li>
-                            <a href="logout"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
+                            <a href="/logout"><i class="fa fa-fw fa-power-off"></i> Log Out</a>
                         </li>
                     </ul>
                 </li>
@@ -168,6 +168,7 @@
               <div class="col-lg-6">
                 <h2>PFAwards</h2>
 		<a class="btn btn-default" href="http://pfawards.professionefinanza.com/iscriviti" role="button">Torna ai PFAwards</a>
+		@demo_button;noquote@
 		<h3 class="sub-header">Esami</h3>
 		@exam_table;noquote@
 		<if @questionnaire@ eq 1>
@@ -192,10 +193,10 @@
     <!-- /#wrapper -->
 
     <!-- jQuery -->
-    <script src="js/jquery.js"></script>
+    <script src="/js/jquery.js"></script>
 
     <!-- Bootstrap Core JavaScript -->
-    <script src="js/bootstrap.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
 
 </body>
 

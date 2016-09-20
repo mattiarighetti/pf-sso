@@ -11,6 +11,7 @@ acs_user::get -user_id $user_id -array user_info
 set username $user_info(first_names)
 append username $user_info(last_name)
 set persona_id [db_string query "select persona_id from crm_persone where user_id = [ad_conn user_id]"]
+set award_id [db_string query "select award_id from awards_edizioni where attivo is true"]
 set exam_table "<table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Edizione PFAwards</th><th>Stato</th><th>Data</th><th>Tempo</th><th>Decorrenza</th><th>Scadenza</th><th>Punti</th><th></th></tr>"
 db_foreach query "select c.titolo, e.esame_id, ed.anno, e.pdf_doc, initcap(lower(e.stato)) as stato, to_char(e.start_time, 'DD/MM/YYYY') as data, to_char(e.end_time - e.start_time, 'MI') as minuti, e.punti, e.attivato, to_char(e.decorrenza, 'DD/MM/YYYY') as decorrenza, to_char(e.scadenza, 'DD/MM/YYYY') as scadenza from awards_esami e, awards_categorie c, awards_edizioni ed where e.persona_id = :persona_id and e.award_id = ed.award_id and c.categoria_id = e.categoria_id order by e.award_id desc, e.stato desc, e.categoria_id, e.scadenza, e.start_time desc, e.esame_id" {
     append exam_table "<tr><td>$esame_id</td><td>$titolo</td><td>$anno</td>"
@@ -54,4 +55,9 @@ db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, e.attivato, to_char(e.
     }
 }
 append questionnaire_table "</table>"
+if {[db_0or1row query "select * from awards_esami e, awards_edizioni d where e.persona_id = :persona_id and e.award_id = :award_id and e.award_id = d.award_id group by e.esame_id, d.award_id limit 1"] && [db_0or1row query "select * from awards_edizioni where award_id = :award_id and demo is true"]} {
+    set demo_button "<a class=\"btn btn-default\" href=\"http://sso.professionefinanza.com/pfawards/demo\">Demo</a>"
+} else {
+    set demo_button ""
+}
 ad_return_template

@@ -1,0 +1,16 @@
+# 
+
+ad_page_contract {
+    
+    
+    
+    @author mattia (mattia.righetti@professionefinanza.com)
+    @creation-date 2016-09-16
+    @cvs-id $Id$
+} {
+    
+} -properties {
+} -validate {
+} -errors {
+}
+
