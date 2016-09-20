@@ -55,7 +55,7 @@ db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, e.attivato, to_char(e.
     }
 }
 append questionnaire_table "</table>"
-if {[db_0or1row query "select * from awards_esami e, awards_edizioni d where e.persona_id = :persona_id and e.award_id = :award_id and e.award_id = d.award_id group by e.esame_id, d.award_id limit 1"] && [db_0or1row query "select * from awards_edizioni where award_id = :award_id and demo is true"]} {
+if {[db_0or1row query "select * from awards_esami where persona_id = :persona_id and award_id = :award_id limit 1"] && [db_0or1row query "select * from awards_edizioni where award_id = :award_id and demo is true"]} {
     set demo_button "<a class=\"btn btn-default\" href=\"http://sso.professionefinanza.com/pfawards/demo\">Demo</a>"
 } else {
     set demo_button ""
