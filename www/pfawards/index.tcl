@@ -12,34 +12,42 @@ set username $user_info(first_names)
 append username $user_info(last_name)
 set persona_id [db_string query "select persona_id from crm_persone where user_id = [ad_conn user_id]"]
 set award_id [db_string query "select award_id from awards_edizioni where attivo is true"]
-set exam_table "<table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Edizione PFAwards</th><th>Stato</th><th>Data</th><th>Tempo</th><th>Decorrenza</th><th>Scadenza</th><th>Punti</th><th></th></tr>"
-db_foreach query "select c.titolo, e.esame_id, ed.anno, e.pdf_doc, initcap(lower(e.stato)) as stato, to_char(e.start_time, 'DD/MM/YYYY') as data, to_char(e.end_time - e.start_time, 'MI') as minuti, e.punti, e.attivato, to_char(e.decorrenza, 'DD/MM/YYYY') as decorrenza, to_char(e.scadenza, 'DD/MM/YYYY') as scadenza from awards_esami e, awards_categorie c, awards_edizioni ed where e.persona_id = :persona_id and e.award_id = ed.award_id and c.categoria_id = e.categoria_id order by e.award_id desc, e.stato desc, e.categoria_id, e.scadenza, e.start_time desc, e.esame_id" {
-    append exam_table "<tr><td>$esame_id</td><td>$titolo</td><td>$anno</td>"
-    if {$stato == ""} {
-	set stato "Da svolgere"
-    }
-    if {[db_0or1row query "select * from awards_bonus where esame_id = :esame_id limit 1"]} {
-	append punti "<small> di cui</small>"
-	db_foreach query "select descrizione as causale, punti from awards_bonus where esame_id = :esame_id" {
-	    append punti "<br><small>$causale ($punti)</small>"
-	}
-    }
-    if {$minuti ne ""} {
-	append minuti " <small>minuti</small>"
-    }
-    append exam_table "<td>$stato</td><td>$data</td><td>$minuti</td><td>$decorrenza</td><td>$scadenza</td><td>$punti</td>"
-    if {$attivato == "t" && $stato == "Da svolgere" && [db_string query "select case when current_date < :decorrenza then 1 else 0 end"]} {
-	append exam_table "<td><a class=\"btn btn-default\" href=\"http://test.pfawards.professionefinanza.com/?esame_id=$esame_id\" role=\"button\"><span class=\"glyphicon glyphicon-play-circle\"></span> Svolgi</a></td>"
-    } else {
-	if {$stato == "Svolto" || $stato == "Rifiutato"} {
-	    append exam_table "<td><a class=\"btn btn-default\" href=\"$pdf_doc\" role=\"button\"><span class=\"glyphicon glyphicon-download\"> Consulta</a></td>"
-	} else {
-	    append exam_table "<td><p><small>Non attivato</small></p></td>"
-      	}
-    }
-    append exam_table "</tr>"
+set exam_table "<ul class=\"nav nav-tabs\" role=\"tablist\">"
+db_foreach query "select award_id as id, case when attivo is true then 'active' else '' end as class, anno from awards_edizioni order by anno desc" {
+    append exam_table "<li class=\"" $class "\" role=\"presentation\"><a href=\"#" $id "\" data-toggle=\"tab\" aria-controls=\"" $award_id "\" role=\"tab\">" $anno "</a></li>"
 }
-append exam_table "</table>"
+append exam_table "</ul><div class=\"tab-content\">"
+db_foreach query "select award_id as id, case when attivo is true then 'active' else '' end as class from awards_edizioni order by anno desc" {
+    append exam_table "<div class=\"tab-pane " $class "\" id=\"" $id "\" role=\"tabpanel\"><table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Stato</th><th>Data</th><th>Tempo</th><th>Decorrenza</th><th>Scadenza</th><th>Punti</th><th></th></tr>"
+    db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, initcap(lower(e.stato)) as stato, to_char(e.start_time, 'DD/MM/YYYY') as data, to_char(e.end_time - e.start_time, 'MI') as minuti, e.punti, e.attivato, e.decorrenza as datadec, to_char(e.decorrenza, 'DD/MM/YYYY') as decorrenza, to_char(e.scadenza, 'DD/MM/YYYY') as scadenza from awards_esami e, awards_categorie c where e.persona_id = :persona_id and e.award_id = :id and c.categoria_id = e.categoria_id order by e.stato desc, e.categoria_id, e.scadenza, e.start_time desc, e.esame_id" {
+	append exam_table "<tr><td>$esame_id</td><td>$titolo</td>"
+	if {$stato == ""} {
+	    set stato "Da svolgere"
+	}
+	if {[db_0or1row query "select * from awards_bonus where esame_id = :esame_id limit 1"]} {
+	    append punti "<small> di cui</small>"
+	    db_foreach query "select descrizione as causale, punti from awards_bonus where esame_id = :esame_id" {
+	    append punti "<br><small>$causale ($punti)</small>"
+	    }
+	}
+	if {$minuti ne ""} {
+	    append minuti " <small>minuti</small>"
+	}
+	append exam_table "<td>$stato</td><td>$data</td><td>$minuti</td><td>$decorrenza</td><td>$scadenza</td><td>$punti</td>"
+	if {$attivato == "t" && [db_string query "select case when current_date > :datadec then 1 else 0 end"]} {
+	    append exam_table "<td><a class=\"btn btn-default\" href=\"http://test.pfawards.professionefinanza.com/?esame_id=$esame_id\" role=\"button\"><span class=\"glyphicon glyphicon-play-circle\"></span> Svolgi</a></td>"
+	} else {
+	    if {$stato == "Svolto" || $stato == "Rifiutato"} {
+		append exam_table "<td><a class=\"btn btn-default\" href=\"$pdf_doc\" role=\"button\"><span class=\"glyphicon glyphicon-download\"> Consulta</a></td>"
+	    } else {
+		append exam_table "<td><p><small>Non attivato</small></p></td>"
+	    }
+	}
+	append exam_table "</tr>"
+    }
+    append exam_table "</table></div>"
+}
+append exam_table "</div>"
 set questionnaire [db_0or1row query "select * from awards_esami_2 where persona_id = :persona_id limit 1"]
 set questionnaire_table "<table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Termine ultimo</th><th></th></tr>"
 db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, e.attivato, to_char(e.scadenza, 'DD/MM/YYYY') from awards_esami_2 e, awards_categorie c where e.persona_id = :persona_id and c.categoria_id = e.categoria_id order by e.scadenza, e.esame_id" {

@@ -165,9 +165,9 @@
           <div class="container-fluid">
 	    
             <div class="row">
-              <div class="col-lg-6">
+              <div class="col-lg-12">
                 <h2>PFAwards</h2>
-		<a class="btn btn-default" href="http://pfawards.professionefinanza.com/iscriviti" role="button">Torna ai PFAwards</a>
+		<a class="btn btn-default" href="http://pfawards.professionefinanza.com/iscriviti" role="button">Torna al sito</a>
 		@demo_button;noquote@
 		<h3 class="sub-header">Esami</h3>
 		@exam_table;noquote@
