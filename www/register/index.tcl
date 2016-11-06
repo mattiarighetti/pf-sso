@@ -245,7 +245,8 @@ ad_form \
 				 -last_name $last_name \
 				 -username [string trim $username] \
 				 -password $password \
-				 -persistent=[expr {$allow_persistent_login_p && [template::util::is_true $persistent_p]}]]
+				 -persistent]
+			     #-persistent=[expr {$allow_persistent_login_p && [template::util::is_true $persistent_p]}]]
     
 	# Handle authentication problems
 	switch $auth_info(auth_status) {

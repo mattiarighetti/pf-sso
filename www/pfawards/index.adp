@@ -169,11 +169,8 @@
                 <h2>PFAwards</h2>
 		<a class="btn btn-default" href="http://pfawards.professionefinanza.com/iscriviti" role="button">Torna al sito</a>
 		@demo_button;noquote@
-		<h3 class="sub-header">Esami</h3>
-		@exam_table;noquote@
-		<if @questionnaire@ eq 1>
-		  <h3 class="sub-header">Questionari <small>(seconda fase)</small></h3>
-		    </if>
+		<br /><br />
+		  @exam_table;noquote@
 		<div class="alert alert-info" role="alert">
 		  <b>Per problemi tecnici</b> rivolgersi a <a href="mailto:supporto@professionefinanza.com?subject=Assistenza-PFAwards">supporto@professionefinanza.com</a>.
       </div>

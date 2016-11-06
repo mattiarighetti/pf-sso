@@ -1,3 +1,4 @@
+
 # Expects parameters:
 #
 # self_register_p - Is the form for users who self register (1) or
@@ -74,11 +75,10 @@ ad_form -name register -export {next_url user_id return_url} -form {
                                      -last_name $last_name \
 				     -password $password \
                                      -password_confirm $password_confirm]
-	
-    }
-    
+          }
+  
     # Handle registration problems
-    
+  
     switch $creation_info(creation_status) {
         ok {
             # Continue below

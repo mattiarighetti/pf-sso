@@ -7,6 +7,7 @@ ad_page_contract {
 set user_id [auth::require_login]
 set dash_html [pf::dash_menu "pfawards"]
 set page_title "PFAwards - ProfessioneFinanza"
+template::head::add_style -style ".tab-pane {border-left: 1px solid #ddd; border-right: 1px solid #ddd; border-bottom: 1px solid #ddd; border-radius: 0px 0px 5px 5px; padding: 10px;} .nav-tabs {margin-bottom: 0;}" -type "text/css"
 acs_user::get -user_id $user_id -array user_info
 set username $user_info(first_names)
 append username $user_info(last_name)
@@ -18,8 +19,8 @@ db_foreach query "select award_id as id, case when attivo is true then 'active' 
 }
 append exam_table "</ul><div class=\"tab-content\">"
 db_foreach query "select award_id as id, case when attivo is true then 'active' else '' end as class from awards_edizioni order by anno desc" {
-    append exam_table "<div class=\"tab-pane " $class "\" id=\"" $id "\" role=\"tabpanel\"><table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Stato</th><th>Data</th><th>Tempo</th><th>Decorrenza</th><th>Scadenza</th><th>Punti</th><th></th></tr>"
-    db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, initcap(lower(e.stato)) as stato, to_char(e.start_time, 'DD/MM/YYYY') as data, to_char(e.end_time - e.start_time, 'MI') as minuti, e.punti, e.attivato, e.decorrenza as datadec, to_char(e.decorrenza, 'DD/MM/YYYY') as decorrenza, to_char(e.scadenza, 'DD/MM/YYYY') as scadenza from awards_esami e, awards_categorie c where e.persona_id = :persona_id and e.award_id = :id and c.categoria_id = e.categoria_id order by e.stato desc, e.categoria_id, e.scadenza, e.start_time desc, e.esame_id" {
+    append exam_table "<div class=\"tab-pane " $class "\" id=\"" $id "\" role=\"tabpanel\"><h3 class=\"sub-header\">Esami <small>(prima fase)</small></h3><table class=\"table table-striped\"><tr><th>Codice esame</th><th>Materia</th><th>Stato</th><th>Data</th><th>Tempo</th><th>Decorrenza</th><th>Scadenza</th><th>Punti</th><th></th></tr>"
+    db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, initcap(lower(e.stato)) as stato, to_char(e.start_time, 'DD/MM/YYYY HH24:MI') as data, to_char(e.end_time - e.start_time, 'MI') as minuti, e.punti, e.attivato, e.decorrenza as datadec, to_char(e.decorrenza, 'DD/MM/YYYY HH24:MI') as decorrenza, to_char(e.scadenza, 'DD/MM/YYYY HH24:MI') as scadenza from awards_esami e, awards_categorie c where e.persona_id = :persona_id and e.award_id = :id and c.categoria_id = e.categoria_id order by e.stato desc, e.categoria_id, e.scadenza, e.start_time desc, e.esame_id" {
 	append exam_table "<tr><td>$esame_id</td><td>$titolo</td>"
 	if {$stato == ""} {
 	    set stato "Da svolgere"
@@ -34,7 +35,7 @@ db_foreach query "select award_id as id, case when attivo is true then 'active' 
 	    append minuti " <small>minuti</small>"
 	}
 	append exam_table "<td>$stato</td><td>$data</td><td>$minuti</td><td>$decorrenza</td><td>$scadenza</td><td>$punti</td>"
-	if {$attivato == "t" && [db_string query "select case when current_date > :datadec then 1 else 0 end"]} {
+	if {$attivato == "t" && [db_string query "select case when current_timestamp > :datadec then 1 else 0 end"] && $stato ne "Svolto" && $stato ne "Rifiutato"} {
 	    append exam_table "<td><a class=\"btn btn-default\" href=\"http://test.pfawards.professionefinanza.com/?esame_id=$esame_id\" role=\"button\"><span class=\"glyphicon glyphicon-play-circle\"></span> Svolgi</a></td>"
 	} else {
 	    if {$stato == "Svolto" || $stato == "Rifiutato"} {
@@ -45,24 +46,22 @@ db_foreach query "select award_id as id, case when attivo is true then 'active' 
 	}
 	append exam_table "</tr>"
     }
+    append exam_table "</table>"
+    if {[db_0or1row query "select * from awards_esami_2 where award_id = :id and persona_id = :persona_id limit 1"]} {
+	append exam_table "<h3 class=\"sub-header\">Questionari <small>(seconda fase)</small></h3>"
+	append exam_table "<table class=\"table table-striped\"><tr><th>Codice esame</th><th>Riferimento</th><th>Categoria</th><th>Decorrenza</th><th>Scadenza</th><th></th></tr>"
+	db_foreach query "select e.esame_id, c.titolo, to_char(e.start_time, 'DD MONTH YYYY - HH24:MI') as start_time, to_char(e.end_time, 'DD MONTH YYYY') as end_time, to_char(e.decorrenza, 'DD/MM/YYYY HH24:MI') as decorrenza, e.decorrenza as date_dec, to_char(e.scadenza, 'DD/MM/YYYY HH24:MI') as scadenza, e.rif_id from awards_esami_2 e, awards_categorie c where award_id = :id and c.categoria_id = e.categoria_id and persona_id = :persona_id order by e.esame_id" {
+	    append exam_table "<tr><td>$esame_id</td><td>$rif_id</td><td>$titolo</td><td>$decorrenza</td><td>$scadenza</td>"
+	    if {[db_string query "select case when current_timestamp > :date_dec then 1 else 0 end"] && $end_time eq ""} {
+		append exam_table "<td><a class=\"btn btn-default\" href=\"http://test.pfawards.professionefinanza.com/?esame_id=$esame_id\" role=\"button\"><span class=\"glyphicon glyphicon-play-circle\"></span> Svolgi</a></td>"
+	    } else {
+		append exam_table "<td></td></tr>"
+	    }
+	}
+    }
     append exam_table "</table></div>"
 }
 append exam_table "</div>"
-set questionnaire [db_0or1row query "select * from awards_esami_2 where persona_id = :persona_id limit 1"]
-set questionnaire_table "<table class=\"table table-striped\"><tr><th>#</th><th>Materia</th><th>Termine ultimo</th><th></th></tr>"
-db_foreach query "select c.titolo, e.esame_id, e.pdf_doc, e.attivato, to_char(e.scadenza, 'DD/MM/YYYY') from awards_esami_2 e, awards_categorie c where e.persona_id = :persona_id and c.categoria_id = e.categoria_id order by e.scadenza, e.esame_id" {
-    append questionnaire_table "<tr><td>$esame_id</td><td>$titolo</td><td>$scadenza</td><td>"
-    if {[db_0or1row query "select * from awards_esami_2 where esame_id = :esame_id and stato is null and attivato is true"]} {
-	append questionnaire_table "<a href=\"http://test.pfawards.professionefinanza.com/?esame_id=$esame_id\" class=\"btn btn-default\"><span class=\"glyphicon glyphicon-play-circle\"></span> Svolgi</a></td></tr>"
-    } else {
-	if {$pdf_doc ne ""} {
-	    append questionnaire_table "<a href=\"$pdf_doc\" class=\"btn btn-default\"><span class=\"glyphicon glyphicon-download\"></span> Consulta</a></td></tr>"
-	} else {
-	    append questionnaire_table "<small>Non attivato</small></td></tr>"
-	}
-    }
-}
-append questionnaire_table "</table>"
 if {[db_0or1row query "select * from awards_esami where persona_id = :persona_id and award_id = :award_id limit 1"] && [db_0or1row query "select * from awards_edizioni where award_id = :award_id and demo is true"]} {
     set demo_button "<a class=\"btn btn-default\" href=\"http://sso.professionefinanza.com/pfawards/demo\">Demo</a>"
 } else {

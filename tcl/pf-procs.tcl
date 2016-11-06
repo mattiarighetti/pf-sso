@@ -77,7 +77,7 @@ ad_proc -public pf::dash_menu {
 	# PFAwards
 	if {[db_0or1row query "select * from awards_esami where persona_id = :persona_id limit 1"]} {
 	    if {$modulo == "pfawards"} {
-		append dash_menu "<li class=\"active\"><i class=\"glyphicon glyphicon-bookmark\"></i> PFAwards</li>"
+		append dash_menu "<li class=\"active\"><a href=\"/pfawards\"><i class=\"glyphicon glyphicon-bookmark\"></i> PFAwards</a></li>"
 	    } else {
 		append dash_menu "<li><a href=\"/pfawards\"><i class=\"glyphicon glyphicon-bookmark\"></i> PFAwards</a></li>"
 	    }
